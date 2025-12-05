@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${appName}">BeeryYummyMap</title>
+
+    <!-- Leaflet CSS -->
+    <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+            crossorigin=""
+    />
+
+
+
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #fef9ff;
+        }
+
+        header {
+            padding: 12px 20px;
+            background: linear-gradient(90deg, #ffb6c9, #ffe29f);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .logo span {
+            font-size: 1.5rem;
+        }
+
+        .tagline {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        #map {
+            height: calc(100vh - 60px); /* เต็มจอ ลบความสูง header */
+            width: 100vw;
+        }
+
+        .leaflet-container {
+            background: #fdf5ff;
+        }
+
+        .floating-btn {
+            position: fixed;
+            bottom: 20px;       /* ห่างจากขอบล่าง */
+            right: 20px;        /* ห่างจากขอบขวา */
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            font-size: 32px;
+            color: white;
+            background: #ff6fa8; /* ชมพูสดใส */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            transition: all 0.2s ease;
+            z-index: 9999;
+        }
+
+        /* เอฟเฟกต์ hover */
+        .floating-btn:hover {
+            transform: scale(1.08);
+            background: #ff85bc;
+        }
+
+        .beer-pin {
+            font-size: 28px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <span>🍺</span> <span th:text="${appName}"></span>
+    </div>
+    <div class="tagline">
+        แผนที่รวมร้านอร่อยของเบียร์
+    </div>
+</header>
+
+<div id="map"></div>
+<button id="addBtn" class="floating-btn">+</button>
+
+
+<script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin="">
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const fallbackLat = 13.7563;
+        const fallbackLng = 100.5018;
+        const fallbackZoom = 12;
+
+        // สร้างแผนที่ด้วยตำแหน่ง fallback ก่อน
+        const map = L.map('map').setView([fallbackLat, fallbackLng], fallbackZoom);
+
+        // ใส่ tile layer (theme น่ารักจาก Stadia)
+        L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+            attribution: '&copy; Stadia Maps'
+        }).addTo(map);
+
+
+        // ขอพิกัดจริงจากเบราว์เซอร์
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    const userLat = pos.coords.latitude;
+                    const userLng = pos.coords.longitude;
+
+                    // เลื่อน map ไปตำแหน่งจริงของผู้ใช้
+                    map.setView([userLat, userLng], 14);
+
+                    // ------------------------------
+                    // หมุด 1 : แบบ "รูปภาพ" 🍰
+                    // ------------------------------
+                    const cafeIcon = L.icon({
+                        iconUrl: 'https://s359.kapook.com/pagebuilder/198c4942-4dc2-481a-9818-21b23e9cdf4f.jpg', // เปลี่ยน url ได้เลย
+                        iconSize: [60, 60],
+                        iconAnchor: [20, 40],
+                        popupAnchor: [0, -35]
+                    });
+
+                    L.marker([userLat + 0.01, userLng + 0.01], { icon: cafeIcon })
+                        .bindPopup("หมุดแบบรูปภาพ 🍰")
+                        .addTo(map);
+
+                    // ------------------------------
+                    // หมุด 2 : แบบ "icon div" 🍺
+                    // ------------------------------
+                    const beerIcon = L.divIcon({
+                        html: '<div class="beer-pin">🍺</div>',
+                        className: '',      // ไม่ใช้ class default ของ leaflet
+                        iconSize: [60, 60],
+                        iconAnchor: [16, 32]
+                    });
+
+                    L.marker([userLat - 0.01, userLng - 0.01], { icon: beerIcon })
+                        .bindPopup("หมุดแบบ icon 🍺")
+                        .addTo(map);
+
+                },
+                function (err) {
+                    console.warn("ผู้ใช้ไม่อนุญาตให้ใช้ location หรือมีปัญหา:", err);
+                    // ถ้า error ก็ใช้ fallback ต่อไป
+                }
+            );
+        } else {
+            console.warn("เบราว์เซอร์นี้ไม่รองรับ geolocation");
+        }
+
+        // ปุ่ม +
+        const addBtn = document.getElementById("addBtn");
+        if (addBtn) {
+            addBtn.addEventListener("click", () => {
+                <!-- alert("กดปุ่ม + (ไว้เดี๋ยวให้เปิดฟอร์มเพิ่มร้านทีหลัง)");-->
+                window.location.href = "/add";
+            });
+        }
+    });
+</script>
+
+
+</body>
+</html>
