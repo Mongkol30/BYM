@@ -12,8 +12,6 @@
             crossorigin=""
     />
 
-
-
     <style>
         body {
             margin: 0;
@@ -55,26 +53,24 @@
 
         .floating-btn {
             position: fixed;
-            bottom: 20px;       /* ห่างจากขอบล่าง */
-            right: 20px;        /* ห่างจากขอบขวา */
+            bottom: 20px;
+            right: 20px;
             width: 60px;
             height: 60px;
             border-radius: 50%;
             border: none;
             font-size: 32px;
             color: white;
-            background: #ff6fa8; /* ชมพูสดใส */
+            background: #ff6fa8;
             box-shadow: 0 4px 12px rgba(0,0,0,0.25);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-
             transition: all 0.2s ease;
             z-index: 9999;
         }
 
-        /* เอฟเฟกต์ hover */
         .floating-btn:hover {
             transform: scale(1.08);
             background: #ff85bc;
@@ -100,7 +96,6 @@
 <div id="map"></div>
 <button id="addBtn" class="floating-btn">+</button>
 
-
 <script
         src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
@@ -114,75 +109,93 @@
         const fallbackLng = 100.5018;
         const fallbackZoom = 12;
 
-        // สร้างแผนที่ด้วยตำแหน่ง fallback ก่อน
+        // สร้างแผนที่
         const map = L.map('map').setView([fallbackLat, fallbackLng], fallbackZoom);
 
-        // ใส่ tile layer (theme น่ารักจาก Stadia)
+        // tile layer
         L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png', {
             maxZoom: 20,
             attribution: '&copy; Stadia Maps'
         }).addTo(map);
 
+        // icon 🍺 สำหรับร้าน
+        const beerIcon = L.divIcon({
+            html: '<div class="beer-pin">🍺</div>',
+            className: '',
+            iconSize: [60, 60],
+            iconAnchor: [16, 32]
+        });
 
-        // ขอพิกัดจริงจากเบราว์เซอร์
+        // ถ้า browser ให้สิทธิ์ใช้ location → zoom ไปใกล้ผู้ใช้
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 function (pos) {
                     const userLat = pos.coords.latitude;
                     const userLng = pos.coords.longitude;
-
-                    // เลื่อน map ไปตำแหน่งจริงของผู้ใช้
                     map.setView([userLat, userLng], 14);
-
-                    // ------------------------------
-                    // หมุด 1 : แบบ "รูปภาพ" 🍰
-                    // ------------------------------
-                    const cafeIcon = L.icon({
-                        iconUrl: 'https://s359.kapook.com/pagebuilder/198c4942-4dc2-481a-9818-21b23e9cdf4f.jpg', // เปลี่ยน url ได้เลย
-                        iconSize: [60, 60],
-                        iconAnchor: [20, 40],
-                        popupAnchor: [0, -35]
-                    });
-
-                    L.marker([userLat + 0.01, userLng + 0.01], { icon: cafeIcon })
-                        .bindPopup("หมุดแบบรูปภาพ 🍰")
-                        .addTo(map);
-
-                    // ------------------------------
-                    // หมุด 2 : แบบ "icon div" 🍺
-                    // ------------------------------
-                    const beerIcon = L.divIcon({
-                        html: '<div class="beer-pin">🍺</div>',
-                        className: '',      // ไม่ใช้ class default ของ leaflet
-                        iconSize: [60, 60],
-                        iconAnchor: [16, 32]
-                    });
-
-                    L.marker([userLat - 0.01, userLng - 0.01], { icon: beerIcon })
-                        .bindPopup("หมุดแบบ icon 🍺")
-                        .addTo(map);
-
                 },
                 function (err) {
-                    console.warn("ผู้ใช้ไม่อนุญาตให้ใช้ location หรือมีปัญหา:", err);
-                    // ถ้า error ก็ใช้ fallback ต่อไป
+                    console.warn("geo error:", err);
                 }
             );
-        } else {
-            console.warn("เบราว์เซอร์นี้ไม่รองรับ geolocation");
         }
 
-        // ปุ่ม +
+        // 👉 ดึง pin จริงจาก backend
+        fetch('/api/homepin/pins')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(pins => {
+                if (!Array.isArray(pins)) {
+                    console.warn("รูปแบบข้อมูลจาก /api/homepin/pins ไม่ใช่ array", pins);
+                    return;
+                }
+
+                const bounds = [];
+
+                pins.forEach(pin => {
+                    // ป้องกันข้อมูลตกหล่น
+                    if (!pin.latitude || !pin.longitude) {
+                        return;
+                    }
+
+                    const lat = Number(pin.latitude);
+                    const lng = Number(pin.longitude);
+
+                    const marker = L.marker([lat, lng], { icon: beerIcon }).addTo(map);
+
+                    // popup แสดงชื่อร้าน + เอา restaurantId ไปใช้เป็นลิงก์ได้
+                    const popupHtml =
+                        `<strong>${pin.restaurantName ?? 'ไม่ทราบชื่อร้าน'}</strong><br/>` +
+                        (pin.address ? `${pin.address}<br/>` : '') +
+                        (pin.restaurantId ? `<a href="/restaurants/${pin.restaurantId}">ดูรายละเอียดร้าน</a>` : '');
+
+                    marker.bindPopup(popupHtml);
+
+                    bounds.push([lat, lng]);
+                });
+
+                // ถ้ามีอย่างน้อย 1 pin → zoom ให้พอดีกับหมุดทั้งหมด
+                if (bounds.length > 0) {
+                    map.fitBounds(bounds, { padding: [40, 40] });
+                }
+            })
+            .catch(err => {
+                console.error("ดึงข้อมูล /api/homepin/pins ล้มเหลว:", err);
+            });
+
+        // ปุ่ม + ไปหน้าเพิ่มร้าน
         const addBtn = document.getElementById("addBtn");
         if (addBtn) {
             addBtn.addEventListener("click", () => {
-                <!-- alert("กดปุ่ม + (ไว้เดี๋ยวให้เปิดฟอร์มเพิ่มร้านทีหลัง)");-->
                 window.location.href = "/add";
             });
         }
     });
 </script>
-
 
 </body>
 </html>
