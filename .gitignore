@@ -31,4 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
-
+### Orther ###
+.env
+/src/main/resources/application.yaml
