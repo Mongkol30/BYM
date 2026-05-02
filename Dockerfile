@@ -7,7 +7,7 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -q
 
 COPY src ./src
-RUN mvn package -DskipTests -q
+RUN mvn package -DskipTests
 
 # ────────────────────────────────────────
 # Stage 2: Run JAR
