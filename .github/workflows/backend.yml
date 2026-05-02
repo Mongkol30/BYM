@@ -8,10 +8,11 @@ on:
 
 jobs:
   # ─────────────────────────────────────────
-  # CI: ทดสอบและ build JAR
+  # CI: แค่ตรวจ compile ผ่านไหม (ไม่ต้อง build JAR จริง)
+  # Render จะ build Docker image เองอยู่แล้ว
   # ─────────────────────────────────────────
   ci:
-    name: Test & Build
+    name: Compile Check
     runs-on: ubuntu-latest
 
     steps:
@@ -25,28 +26,12 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-#      - name: Run tests
-#        run: mvn test
-#        env:
-          # Supabase connection สำหรับ test (ใช้ test DB แยกถ้ามี)
-#          SPRING_DATASOURCE_URL: ${{ secrets.TEST_DB_URL }}
-#          SPRING_DATASOURCE_USERNAME: ${{ secrets.TEST_DB_USERNAME }}
-#          SPRING_DATASOURCE_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-
-      - name: Build JAR
-        run: mvn package -DskipTests
-
-      - name: Upload JAR artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-jar
-          path: target/*.jar
-          retention-days: 1
+      - name: Compile (fast check)
+        run: mvn compile -q
 
   # ─────────────────────────────────────────
-  # CD: Deploy ไป Render (เฉพาะ push to main)
-  # Render จะ pull จาก GitHub และ deploy ใหม่อัตโนมัติ
-  # เราแค่ trigger deploy hook ของ Render
+  # CD: Trigger Render ให้ build Docker image และ deploy
+  # เฉพาะ push to main เท่านั้น
   # ─────────────────────────────────────────
   deploy:
     name: Deploy to Render
