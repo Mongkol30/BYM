@@ -13,8 +13,8 @@ public class locations {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private UUID id ;
     private String locCode ;
-    private BigDecimal latitude;
-    private BigDecimal longitude;
+    private Double latitude;
+    private Double longitude;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
@@ -34,19 +34,19 @@ public class locations {
         this.locCode = loc_code;
     }
 
-    public BigDecimal getLatitude() {
+    public Double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(BigDecimal latitude) {
+    public void setLatitude(Double latitude) {
         this.latitude = latitude;
     }
 
-    public BigDecimal getLongitude() {
+    public Double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(BigDecimal longitude) {
+    public void setLongitude(Double longitude) {
         this.longitude = longitude;
     }
 
