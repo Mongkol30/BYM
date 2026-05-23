@@ -33,4 +33,3 @@ build/
 .vscode/
 ### Orther ###
 .env
-application-dev.yml
