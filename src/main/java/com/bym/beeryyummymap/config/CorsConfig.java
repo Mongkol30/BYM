@@ -12,7 +12,7 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.addAllowedOrigin("https://bym-front.netlify.app");
+        config.addAllowedOrigin("https://what-mongkhon-ate.netlify.app");
         config.addAllowedOrigin("http://localhost:4200"); // สำหรับ dev
 
         config.addAllowedMethod("*");
