@@ -15,12 +15,41 @@ public class HomeService {
         this.jdbc = jdbc;
     }
 
-    public List<HomePinLocationsDto> getAllPins() {
+    public List<HomePinLocationsDto> getAllPins(String search) {
+        if (search != null && !search.trim().isEmpty()) {
+            String searchPattern = "%" + search.trim() + "%";
+            String sql = """
+                    SELECT DISTINCT l.id as locationId
+                           ,r.id as restaurantId
+                           ,r."name" as restaurantName
+                           ,r.image_url as imageUrl
+                           ,l.latitude as latitude
+                           ,l.longitude as longitude
+                    FROM locations l
+                    JOIN restaurants r ON r.location_id = l.id
+                    LEFT JOIN menus m ON m.res_id = r.id
+                    WHERE r.status = 'ACTIVE'
+                      AND (LOWER(r."name") LIKE LOWER(?) OR LOWER(m."name") LIKE LOWER(?))
+                    """;
+
+            return jdbc.query(sql, (rs, rowNum) ->
+                    new HomePinLocationsDto(
+                            rs.getObject("locationId", java.util.UUID.class),
+                            rs.getObject("restaurantId", java.util.UUID.class),
+                            rs.getString("restaurantName"),
+                            rs.getString("imageUrl"),
+                            rs.getBigDecimal("latitude"),
+                            rs.getBigDecimal("longitude")
+                    ),
+                    searchPattern, searchPattern
+            );
+        }
 
         String sql = """
                 SELECT       l.id as locationId
                        		,r.id as restaurantId
                        		,r."name" as restaurantName
+                       		,r.image_url as imageUrl
                        		,l.latitude as latitude
                        		,l.longitude as longitude
                 FROM locations l
@@ -33,6 +62,7 @@ public class HomeService {
                         rs.getObject("locationId", java.util.UUID.class),
                         rs.getObject("restaurantId", java.util.UUID.class),
                         rs.getString("restaurantName"),
+                        rs.getString("imageUrl"),
                         rs.getBigDecimal("latitude"),
                         rs.getBigDecimal("longitude")
                 )

@@ -9,11 +9,12 @@ import java.util.UUID;
 public class restaurants {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id ;
     private String resCode ;
     private String name;
     private String description ;
+    private String imageUrl;
     private String status;
     private UUID locationId;
     private Timestamp createdAt;
@@ -50,6 +51,14 @@ public class restaurants {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public String getStatus() {

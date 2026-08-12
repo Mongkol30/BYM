@@ -1,4 +1,5 @@
 package com.bym.beeryyummymap.config;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -12,9 +13,7 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.addAllowedOrigin("https://what-mongkhon-ate.netlify.app");
-        config.addAllowedOrigin("http://localhost:4200"); // สำหรับ dev
-
+        config.addAllowedOriginPattern("*");
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);
