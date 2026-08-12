@@ -10,7 +10,7 @@ import java.util.UUID;
 public class locations {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id ;
     private String locCode ;
     private Double latitude;

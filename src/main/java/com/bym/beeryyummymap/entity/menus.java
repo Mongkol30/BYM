@@ -10,12 +10,13 @@ import java.util.UUID;
 public class menus {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id ;
     private String menuCode ;
     private String name;
     private BigDecimal price;
     private String description;
+    private String imageUrl;
     private String status;
     private UUID resId ;
     private Timestamp createdAt;
@@ -59,6 +60,14 @@ public class menus {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public String getStatus() {

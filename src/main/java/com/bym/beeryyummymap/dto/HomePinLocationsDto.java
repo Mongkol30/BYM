@@ -7,6 +7,7 @@ public record HomePinLocationsDto (
         UUID locationId,
         UUID restaurantId,
         String restaurantName,
+        String imageUrl,
         BigDecimal latitude,
         BigDecimal longitude
 ) {}
