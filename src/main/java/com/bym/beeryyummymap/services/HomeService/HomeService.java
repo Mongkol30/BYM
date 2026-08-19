@@ -19,17 +19,23 @@ public class HomeService {
         if (search != null && !search.trim().isEmpty()) {
             String searchPattern = "%" + search.trim() + "%";
             String sql = """
-                    SELECT DISTINCT l.id as locationId
+                    SELECT l.id as locationId
                            ,r.id as restaurantId
                            ,r."name" as restaurantName
                            ,r.image_url as imageUrl
                            ,l.latitude as latitude
                            ,l.longitude as longitude
+                           ,(SELECT STRING_AGG(m2."name", ', ') 
+                             FROM menus m2 
+                             WHERE m2.res_id = r.id 
+                               AND LOWER(m2."name") LIKE LOWER(?)) as matchedMenuName
                     FROM locations l
                     JOIN restaurants r ON r.location_id = l.id
-                    LEFT JOIN menus m ON m.res_id = r.id
                     WHERE r.status = 'ACTIVE'
-                      AND (LOWER(r."name") LIKE LOWER(?) OR LOWER(m."name") LIKE LOWER(?))
+                      AND (LOWER(r."name") LIKE LOWER(?) OR EXISTS (
+                          SELECT 1 FROM menus m3 
+                          WHERE m3.res_id = r.id AND LOWER(m3."name") LIKE LOWER(?)
+                      ))
                     """;
 
             return jdbc.query(sql, (rs, rowNum) ->
@@ -39,9 +45,10 @@ public class HomeService {
                             rs.getString("restaurantName"),
                             rs.getString("imageUrl"),
                             rs.getBigDecimal("latitude"),
-                            rs.getBigDecimal("longitude")
+                            rs.getBigDecimal("longitude"),
+                            rs.getString("matchedMenuName")
                     ),
-                    searchPattern, searchPattern
+                    searchPattern, searchPattern, searchPattern
             );
         }
 
@@ -64,7 +71,8 @@ public class HomeService {
                         rs.getString("restaurantName"),
                         rs.getString("imageUrl"),
                         rs.getBigDecimal("latitude"),
-                        rs.getBigDecimal("longitude")
+                        rs.getBigDecimal("longitude"),
+                        null
                 )
         );
     }
