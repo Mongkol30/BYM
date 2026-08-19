@@ -9,5 +9,6 @@ public record HomePinLocationsDto (
         String restaurantName,
         String imageUrl,
         BigDecimal latitude,
-        BigDecimal longitude
+        BigDecimal longitude,
+        String matchedMenuName
 ) {}
