@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "menus")
-public class menus {
+public class Menu {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -18,6 +18,7 @@ public class menus {
     private String description;
     private String imageUrl;
     private String status;
+    private String category;
     private UUID resId ;
     private Timestamp createdAt;
     private Timestamp updatedAt;
@@ -76,6 +77,14 @@ public class menus {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public UUID getResId() {

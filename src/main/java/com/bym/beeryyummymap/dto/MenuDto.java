@@ -10,5 +10,6 @@ public record MenuDto(
         BigDecimal price,
         String description,
         String imageUrl,
-        String status
+        String status,
+        String category
 ) {}
