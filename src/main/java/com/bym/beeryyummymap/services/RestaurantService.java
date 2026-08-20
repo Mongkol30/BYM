@@ -3,9 +3,9 @@ package com.bym.beeryyummymap.services;
 import com.bym.beeryyummymap.dto.MenuDto;
 import com.bym.beeryyummymap.dto.RestaurantDetailDto;
 import com.bym.beeryyummymap.dto.RestaurantRequestDto;
-import com.bym.beeryyummymap.entity.locations;
-import com.bym.beeryyummymap.entity.menus;
-import com.bym.beeryyummymap.entity.restaurants;
+import com.bym.beeryyummymap.entity.Location;
+import com.bym.beeryyummymap.entity.Menu;
+import com.bym.beeryyummymap.entity.Restaurant;
 import com.bym.beeryyummymap.repository.LocationRepository;
 import com.bym.beeryyummymap.repository.MenusRepository;
 import com.bym.beeryyummymap.repository.RestaurantsRepository;
@@ -40,16 +40,16 @@ public class RestaurantService {
         Timestamp now = Timestamp.from(Instant.now());
 
         // 1. Create Location
-        locations loc = new locations();
+        Location loc = new Location();
         loc.setLocCode("LOC-" + System.currentTimeMillis());
         loc.setLatitude(dto.latitude());
         loc.setLongitude(dto.longitude());
         loc.setCreatedAt(now);
         loc.setUpdatedAt(now);
-        locations savedLoc = locationRepository.save(loc);
+        Location savedLoc = locationRepository.save(loc);
 
         // 2. Create Restaurant
-        restaurants res = new restaurants();
+        Restaurant res = new Restaurant();
         res.setResCode("RES-" + System.currentTimeMillis());
         res.setName(dto.name());
         res.setDescription(dto.description());
@@ -58,23 +58,24 @@ public class RestaurantService {
         res.setLocationId(savedLoc.getId());
         res.setCreatedAt(now);
         res.setUpdatedAt(now);
-        restaurants savedRes = restaurantsRepository.save(res);
+        Restaurant savedRes = restaurantsRepository.save(res);
 
         // 3. Create Menus if any
         List<MenuDto> createdMenus = new ArrayList<>();
         if (dto.menus() != null && !dto.menus().isEmpty()) {
             for (MenuDto mDto : dto.menus()) {
-                menus m = new menus();
-                m.setMenuCode("MNU-" + System.currentTimeMillis());
+                Menu m = new Menu();
+                m.setMenuCode("MNU-" + System.currentTimeMillis() + "-" + java.util.UUID.randomUUID().toString().substring(0, 5));
                 m.setName(mDto.name());
                 m.setPrice(mDto.price());
                 m.setDescription(mDto.description());
                 m.setImageUrl(mDto.imageUrl());
                 m.setStatus(mDto.status() != null ? mDto.status() : "ACTIVE");
+                m.setCategory(mDto.category());
                 m.setResId(savedRes.getId());
                 m.setCreatedAt(now);
                 m.setUpdatedAt(now);
-                menus savedM = menusRepository.save(m);
+                Menu savedM = menusRepository.save(m);
                 createdMenus.add(new MenuDto(
                         savedM.getId(),
                         savedM.getMenuCode(),
@@ -82,7 +83,8 @@ public class RestaurantService {
                         savedM.getPrice(),
                         savedM.getDescription(),
                         savedM.getImageUrl(),
-                        savedM.getStatus()
+                        savedM.getStatus(),
+                        savedM.getCategory()
                 ));
             }
         }
@@ -103,15 +105,15 @@ public class RestaurantService {
 
     @Transactional(readOnly = true)
     public RestaurantDetailDto getRestaurantById(UUID id) {
-        restaurants res = restaurantsRepository.findById(id)
+        Restaurant res = restaurantsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Restaurant not found with id: " + id));
 
-        locations loc = null;
+        Location loc = null;
         if (res.getLocationId() != null) {
             loc = locationRepository.findById(res.getLocationId()).orElse(null);
         }
 
-        List<menus> menuEntities = menusRepository.findByResId(res.getId());
+        List<Menu> menuEntities = menusRepository.findByResId(res.getId());
         List<MenuDto> menuDtos = menuEntities.stream()
                 .map(m -> new MenuDto(
                         m.getId(),
@@ -120,7 +122,8 @@ public class RestaurantService {
                         m.getPrice(),
                         m.getDescription(),
                         m.getImageUrl(),
-                        m.getStatus()
+                        m.getStatus(),
+                        m.getCategory()
                 ))
                 .toList();
 
@@ -140,7 +143,7 @@ public class RestaurantService {
 
     @Transactional
     public RestaurantDetailDto updateRestaurant(UUID id, RestaurantRequestDto dto) {
-        restaurants res = restaurantsRepository.findById(id)
+        Restaurant res = restaurantsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Restaurant not found with id: " + id));
 
         Timestamp now = Timestamp.from(Instant.now());
@@ -150,9 +153,9 @@ public class RestaurantService {
         res.setImageUrl(dto.imageUrl());
         if (dto.status() != null) res.setStatus(dto.status());
         res.setUpdatedAt(now);
-        restaurants savedRes = restaurantsRepository.save(res);
+        Restaurant savedRes = restaurantsRepository.save(res);
 
-        locations loc = null;
+        Location loc = null;
         if (res.getLocationId() != null) {
             loc = locationRepository.findById(res.getLocationId()).orElse(null);
         }
@@ -168,17 +171,18 @@ public class RestaurantService {
         List<MenuDto> updatedMenus = new ArrayList<>();
         if (dto.menus() != null && !dto.menus().isEmpty()) {
             for (MenuDto mDto : dto.menus()) {
-                menus m = new menus();
-                m.setMenuCode("MNU-" + System.currentTimeMillis());
+                Menu m = new Menu();
+                m.setMenuCode("MNU-" + System.currentTimeMillis() + "-" + java.util.UUID.randomUUID().toString().substring(0, 5));
                 m.setName(mDto.name());
                 m.setPrice(mDto.price());
                 m.setDescription(mDto.description());
                 m.setImageUrl(mDto.imageUrl());
                 m.setStatus(mDto.status() != null ? mDto.status() : "ACTIVE");
+                m.setCategory(mDto.category());
                 m.setResId(savedRes.getId());
                 m.setCreatedAt(now);
                 m.setUpdatedAt(now);
-                menus savedM = menusRepository.save(m);
+                Menu savedM = menusRepository.save(m);
                 updatedMenus.add(new MenuDto(
                         savedM.getId(),
                         savedM.getMenuCode(),
@@ -186,7 +190,8 @@ public class RestaurantService {
                         savedM.getPrice(),
                         savedM.getDescription(),
                         savedM.getImageUrl(),
-                        savedM.getStatus()
+                        savedM.getStatus(),
+                        savedM.getCategory()
                 ));
             }
         }
@@ -207,7 +212,7 @@ public class RestaurantService {
 
     @Transactional
     public void deleteRestaurant(UUID id) {
-        restaurants res = restaurantsRepository.findById(id)
+        Restaurant res = restaurantsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Restaurant not found with id: " + id));
 
         // Soft delete: set status to INACTIVE
